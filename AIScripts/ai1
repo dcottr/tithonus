@@ -1,0 +1,24 @@
+print("xPos: ", xPosition)
+print("dir: ", facingDirection)
+
+if shouldTurnLeft then
+  turnLeft();
+  shouldTurnLeft = false
+else
+  if not moveForward() then
+    shouldTurnLeft = true
+  else
+    shouldTurnLeft = false
+  end
+end
+
+--[[
+if xPosition < 4 then
+	moveForward()
+elseif xPosition == 4 and facingDirection == "E" then
+	turnLeft()
+	b = 10
+else
+	moveForward()
+end
+]]--
