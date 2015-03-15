@@ -1,30 +1,21 @@
 package game;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.Collection;
-import java.util.Scanner;
-
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MoveAction;
-
-import org.omg.CORBA.PUBLIC_MEMBER;
-
-import ai.LuaJManager;
+import java.util.LinkedList;
 
 public class GameEngine {
 
+	@SuppressWarnings("unused")
 	private String[] aiScripts;	// TODO, pull this out into an interface, handle different kinds of scripts for 
-	private GameState gameState;
+	public GameState gameState;
 	
-	private Collection<MoveObserver> observers;
+	private LinkedList<MoveObserver> observers = new LinkedList<>();
 	private int winnerPlayerID = -1;
 	
-	public GameEngine(String[] aiScripts, Collection<MoveObserver> observers) {
+	public GameEngine(String[] aiScripts) {
 		this.aiScripts = aiScripts;
-		this.observers = observers;
 		gameState = new GameState(aiScripts);
 	}
-	
+		
 	public void start() {
 		int turns = 15;
 		while (winnerPlayerID < 0 && turns > 0) {
@@ -34,18 +25,28 @@ public class GameEngine {
 				for (Ant ant : colony.ants) {
 					AntMove antMove = ant.playTurn();
 					notifyObservers(antMove, ant);
-					display();
+				//	display();
 				}
 			}
 			turns--;
 		}
 	}
 	
+	public void addObserver(MoveObserver observer) {
+		observers.add(observer);
+	}
+	
+	public void removeObserver(MoveObserver observer) {
+		observers.remove(observer);
+	}
+	
 	private void notifyObservers(AntMove antMove, Ant ant) {
+		if (observers == null) return;
 		for (MoveObserver observer : observers) {
 			observer.notifyMove(antMove, ant);
 		}
 	}
+	
 		
 	private void display() {
 		Tile tile;
@@ -79,22 +80,5 @@ public class GameEngine {
 			}
 			System.out.println();
 		}
-	}
-	
-	public static void main(String[] args) throws FileNotFoundException {
-		String[] filePaths = new String[]{"AIScripts/ai1", "AIScripts/ai2"};
-		String[] aiScripts = new String[filePaths.length];
-		for (int i = 0; i < filePaths.length; i++) {
-			//read the script from path
-			aiScripts[i] = "";
-			Scanner scanner = new Scanner(new File(filePaths[i]));
-			while (scanner.hasNextLine()) {
-				aiScripts[i] += scanner.nextLine() + '\n';
-			}
-			scanner.close();
-		}
-		
-		GameEngine engine = new GameEngine(aiScripts);
-		engine.start();
 	}
 }

@@ -41,7 +41,7 @@ public class LuaAnt extends AntAI {
 	
 	// return an AntMove object
 	public AntMove playTurn() {
-		move = new AntMove();
+		move = new AntMove(ant);
 		script.call();
 		ant.acceptMove(move);
 		updateLuaEnv();

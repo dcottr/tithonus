@@ -6,14 +6,24 @@ public class Ant {
 	public GameState gState;
 	private AntAI ai;
 	public final int playerID;
+	public final int antID;
 	public Tile position;
 	public Direction facingDirection;
+	public boolean alive = true;
 
 	public Ant(int playerID, GameState gameState, Tile position, Direction facingDirection) {
 		this.playerID = playerID;
+		this.antID = generateUniqueID();
 		this.gState = gameState;
 		setPosition(position);
 		this.facingDirection = facingDirection;
+	}
+	
+
+	private static int uniqueID = 0;
+	private static int generateUniqueID() {
+		return uniqueID++;
+		
 	}
 
 	public void setPosition(Tile tile) {

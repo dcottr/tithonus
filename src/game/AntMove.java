@@ -9,6 +9,11 @@ public class AntMove {
 	public boolean valid = true;
 	private boolean moveAssigned = false;
 	
+	public Ant ant;
+	
+	public AntMove(Ant ant) {
+		this.ant = ant;
+	}
 
 	public void setMoveDirection(Direction dir) {
 		certifyMove();
