@@ -1,5 +1,6 @@
 package game;
 
+import java.sql.Date;
 import java.util.LinkedList;
 
 public class GameEngine {
@@ -8,7 +9,7 @@ public class GameEngine {
 	private String[] aiScripts;	// TODO, pull this out into an interface, handle different kinds of scripts for 
 	public GameState gameState;
 	
-	private LinkedList<MoveObserver> observers = new LinkedList<>();
+	private LinkedList<GameObserver> observers = new LinkedList<>();
 	private int winnerPlayerID = -1;
 	
 	public GameEngine(String[] aiScripts) {
@@ -17,7 +18,8 @@ public class GameEngine {
 	}
 		
 	public void start() {
-		int turns = 15;
+		int turns = 100;
+		System.out.println("go");
 		while (winnerPlayerID < 0 && turns > 0) {
 			// play a game's turn
 			// foreach colony, play turn -> check victory
@@ -30,22 +32,32 @@ public class GameEngine {
 			}
 			turns--;
 		}
+		System.out.println("completed");
+		notifyObservers(-1);
 	}
 	
-	public void addObserver(MoveObserver observer) {
+	public void addObserver(GameObserver observer) {
 		observers.add(observer);
 	}
 	
-	public void removeObserver(MoveObserver observer) {
+	public void removeObserver(GameObserver observer) {
 		observers.remove(observer);
 	}
 	
 	private void notifyObservers(AntMove antMove, Ant ant) {
 		if (observers == null) return;
-		for (MoveObserver observer : observers) {
+		for (GameObserver observer : observers) {
 			observer.notifyMove(antMove, ant);
 		}
 	}
+	
+	private void notifyObservers(int winningPlayerID) {
+		if (observers == null) return;
+		for (GameObserver observer : observers) {
+			observer.notifyOutcome(winningPlayerID);
+		}
+	}
+
 	
 		
 	private void display() {

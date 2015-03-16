@@ -1,1 +1,1 @@
-print('player: ', player);
+moveForward();

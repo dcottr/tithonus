@@ -1,5 +1,3 @@
-print("xPos: ", xPosition)
-print("dir: ", facingDirection)
 
 if shouldTurnLeft then
   turnLeft();

@@ -4,11 +4,11 @@ import game.Ant;
 import game.AntMove;
 import game.Colony;
 import game.GameState;
-import game.MoveObserver;
+import game.GameObserver;
 
 import javax.json.*;
 
-public class GameEncoder extends MoveObserver {
+public class GameEncoder extends GameObserver {
 
 	private JsonObjectBuilder game = Json.createObjectBuilder();
 	private JsonArrayBuilder moves = Json.createArrayBuilder();
@@ -25,6 +25,11 @@ public class GameEncoder extends MoveObserver {
 	public void notifyMove(AntMove move, Ant ant) {
 		JsonObjectBuilder moveBuilder = encodeMove(move, ant);
 		moves.add(moveBuilder);
+	}
+	
+	@Override
+	public void notifyOutcome(int winningPlayerID) {
+		game.add("winnerPlayerID", winningPlayerID);
 	}
 	
 	public JsonObject getGameJson() {
@@ -68,5 +73,7 @@ public class GameEncoder extends MoveObserver {
 		changesBuilder.add(encodeAnt(ant));
 		moveBuilder.add("movedAnts", changesBuilder);
 		return moveBuilder;
-	}	
+	}
+
+	
 }

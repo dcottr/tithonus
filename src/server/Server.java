@@ -1,15 +1,12 @@
 package server;
 
+
 import game.GameEngine;
-import game.GameState;
-import game.MoveObserver;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.util.Collection;
-import java.util.LinkedList;
 import java.util.Scanner;
 
 import javax.json.Json;
@@ -33,9 +30,9 @@ public class Server {
 			scanner.close();
 		}
 		
-				
 		GameEngine engine = new GameEngine(aiScripts);
 		GameEncoder encoder = new GameEncoder(engine.gameState);
+				
 		engine.addObserver(encoder);
 		engine.start();
 		
