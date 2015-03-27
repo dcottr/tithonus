@@ -36,6 +36,9 @@ public class LuaAnt extends AntAI {
 		setEnv("moveForward", new MoveForward());
 		setEnv("turnLeft", new TurnLeft());
 		setEnv("turnRight", new TurnRight());
+		setEnv("myHitpoints", new MyHitpoints());
+		setEnv("enemyAntAhead", new EnemyAntInFront());
+		setEnv("attackAntAhead", new AttackAntInFront());
 		updateLuaEnv();
 	}
 	
@@ -72,17 +75,34 @@ public class LuaAnt extends AntAI {
 
 	 private class TurnRight extends ZeroArgFunction {
 		 public LuaValue call() {
-			 move.setMoveDirection(ant.facingDirection.right());
+			 move.setTurnDirection(ant.facingDirection.right());
 			 return LuaValue.NIL;
 		 }
 	 }
-
+	 
+	 private class MyHitpoints extends ZeroArgFunction {
+		 public LuaValue call() {
+			 return LuaValue.valueOf(ant.health);
+		 }
+	 }
+	 
+	 private class EnemyAntInFront extends ZeroArgFunction {
+		 public LuaValue call() {
+			 return LuaValue.valueOf(ant.hasEnemyAntInFront());
+		 }
+	 }
+	 
+	 // Returns new health of enemy (zero if dead)
+	 private class AttackAntInFront extends ZeroArgFunction {
+		 public LuaValue call() {
+			 return LuaValue.valueOf(move.attackAntInFront());
+		 }
+	 }
 	 
 	private void updateLuaEnv() {
 		setEnv("xPosition", ant.position.x);
 		setEnv("yPosition", ant.position.y);
 		setEnv("facingDirection", LuaValue.valueOf(ant.facingDirection.name()));
-		
 	}
 	
 	private void setEnv(String varNameString, LuaValue variable) {

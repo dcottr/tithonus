@@ -12,7 +12,7 @@ public class GameEncoder extends GameObserver {
 
 	private JsonObjectBuilder game = Json.createObjectBuilder();
 	private JsonArrayBuilder moves = Json.createArrayBuilder();
-
+	
 	public GameEncoder(GameState gameState) {
 		super(gameState);
 		game.add("boardDimension", Json.createObjectBuilder()
@@ -42,7 +42,7 @@ public class GameEncoder extends GameObserver {
 		
 		for (Colony colony : gameState.colonies) {
 			JsonObjectBuilder player = Json.createObjectBuilder();
-			player.add("playerId", colony.playerID);
+			player.add("playerID", colony.playerID);
 			JsonArrayBuilder ants = Json.createArrayBuilder();
 			for (Ant ant : colony.ants) {
 				ants.add(encodeAnt(ant));
@@ -70,8 +70,10 @@ public class GameEncoder extends GameObserver {
 	private JsonObjectBuilder encodeMove(AntMove move, Ant ant) {
 		JsonObjectBuilder moveBuilder = Json.createObjectBuilder();
 		JsonArrayBuilder changesBuilder = Json.createArrayBuilder();
-		changesBuilder.add(encodeAnt(ant));
-		moveBuilder.add("movedAnts", changesBuilder);
+		for (Ant changedAnt : move.modifiedAnts) {
+			changesBuilder.add(encodeAnt(changedAnt));
+		}
+		moveBuilder.add("modifiedAnts", changesBuilder);
 		return moveBuilder;
 	}
 

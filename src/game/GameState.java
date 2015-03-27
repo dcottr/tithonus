@@ -29,6 +29,13 @@ public class GameState {
 		}
 	}
 	
+	private int uniqueID = 0;
+	// generates ID unique to this instance of GameState.
+	public int generateUniqueID() {
+		return uniqueID++;
+	}
+
+	
 	
 	/**
 	 * @param x X coordinate

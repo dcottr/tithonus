@@ -10,20 +10,14 @@ public class Ant {
 	public Tile position;
 	public Direction facingDirection;
 	public boolean alive = true;
+	public float health = 100.0f;
 
 	public Ant(int playerID, GameState gameState, Tile position, Direction facingDirection) {
 		this.playerID = playerID;
-		this.antID = generateUniqueID();
 		this.gState = gameState;
+		this.antID = gState.generateUniqueID();
 		setPosition(position);
 		this.facingDirection = facingDirection;
-	}
-	
-
-	private static int uniqueID = 0;
-	private static int generateUniqueID() {
-		return uniqueID++;
-		
 	}
 
 	public void setPosition(Tile tile) {
@@ -70,13 +64,41 @@ public class Ant {
 		return canMoveToTile(d.xDelta, d.yDelta);
 	}
 	
+	public boolean hasEnemyAntInFront() {
+		Ant antInFront = getAntInFront();
+		return !(antInFront == null || !antInFront.alive || antInFront.playerID == playerID);
+	}
+	
+	public Ant attackAntInFront() {
+		Ant antInFront = getAntInFront();
+		antInFront.takeDamage(this);
+		return antInFront;
+	}
+	
+	public void takeDamage(Ant attacker) {
+		health -= 0.1 * attacker.health;
+		if (health <= 0.0f)
+			alive = false;
+	}
+	
+	private Ant getAntInFront () {
+		Tile frontTile = getTileAtDelta(facingDirection.xDelta, facingDirection.yDelta);
+		if (frontTile == null)
+			return null;
+		return frontTile.ant;
+	}
+	
 	private boolean canMoveToTile(int deltaX, int deltaY) {
 		if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) return false;
-		Tile dest = gState.getTile(position.x + deltaX, position.y + deltaY);
+		Tile dest = getTileAtDelta(deltaX, deltaY);
 		if (dest != null) {
 			return !dest.obstacle();
 		}
 		return false;
 
+	}
+	
+	private Tile getTileAtDelta(int deltaX, int deltaY) {
+		return gState.getTile(position.x + deltaX, position.y + deltaY);
 	}
 }

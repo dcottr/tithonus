@@ -27,7 +27,7 @@ public class GameEngine {
 				for (Ant ant : colony.ants) {
 					AntMove antMove = ant.playTurn();
 					notifyObservers(antMove, ant);
-				//	display();
+					display();
 				}
 			}
 			turns--;
@@ -65,7 +65,7 @@ public class GameEngine {
 		for (int y = 0; y < gameState.WORLD_Y_LENGTH; y++) {
 			for (int x = 0; x < gameState.WORLD_X_LENGTH; x++) {
 				tile = gameState.getTile(x, y);
-				if (tile.ant != null) {
+				if (tile.ant != null && tile.ant.alive) {
 					char c = '?';
 					switch (tile.ant.facingDirection) {
 					case N:
