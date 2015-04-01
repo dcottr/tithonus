@@ -7,6 +7,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.OutputStream;
+import java.util.Enumeration;
+import java.util.LinkedList;
 import java.util.Scanner;
 
 import javax.json.Json;
@@ -44,23 +46,48 @@ public class ServerManager extends AbstractHandler {
             Request baseRequest,
             HttpServletRequest request,
             HttpServletResponse response) throws IOException {
-    	String[] idStrings = request.getParameterValues("id");
-    	if (idStrings == null) return;
+		Enumeration<String> pNames = request.getParameterNames();
+		LinkedList<String> aiStrings = new LinkedList<>();
+		while (pNames.hasMoreElements()) {
+		       String param = pNames.nextElement();
+		       String ai = request.getParameter(param);
+		       aiStrings.add(ai);
+		       System.out.println("ai: " + param + " : " + ai);
+		}
+		
+    	if (aiStrings.isEmpty()) return;
     	
     	System.out.println(request.getContextPath());
     	System.out.println(request.getPathInfo());
         response.setContentType("text/html;charset=utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
         baseRequest.setHandled(true);
-        
-        String jsonString = runGame(idStrings);
+        String[] playerAIs = (String[]) aiStrings.toArray(new String[aiStrings.size()]);
+        String jsonString = runGame(playerAIs);
                 
         response.getWriter().println(jsonString);
 
     	
 	}
 	
-	private String runGame(String[] playerIDs) throws FileNotFoundException {
+	private String runGame(String[] playerAIs) throws FileNotFoundException {		
+		GameEngine engine = new GameEngine(playerAIs);
+		GameEncoder encoder = new GameEncoder(engine.gameState);
+				
+		engine.addObserver(encoder);
+		engine.start();
+		
+		//write to file
+//        OutputStream os = new FileOutputStream("game.json");
+        OutputStream jsonStream = new ByteArrayOutputStream();
+        JsonWriter jsonWriter = Json.createWriter(jsonStream);
+        jsonWriter.writeObject(encoder.getGameJson());
+        jsonWriter.close();
+		String jsonString = jsonStream.toString();
+		return jsonString;
+	}
+	
+	private String runGameWithIDs(String[] playerIDs) throws FileNotFoundException {
 		
 		String[] filePaths = new String[playerIDs.length]; //new String[]{"AIScripts/ai1", "AIScripts/ai2"};
 		
