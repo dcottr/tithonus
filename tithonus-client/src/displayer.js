@@ -14,7 +14,6 @@ var GAME_HEIGHT; //= tileHeight * 10;
 var game = null;
 var gameJSON;
 
-//var game = new Phaser.Game(GAME_WIDTH, GAME_HEIGHT, Phaser.AUTO, 'match', { preload: preload, create: create, update: update });
 
 function preload() {
 	game.load.image('tile', 'assets/boundTile.png');
@@ -27,8 +26,8 @@ function preload() {
 
 function create() {
 	lastGameUpdate = game.time.now;
-	for (var i = 0; i < 10; i++) {
-		for (var j = 0; j < 10; j++) {
+	for (var i = 0; i < GAME_WIDTH; i++) {
+		for (var j = 0; j < GAME_HEIGHT; j++) {
 			var tile = game.add.sprite(i * tileWidth, j * tileHeight, 'tile');
 		//	var tile = game.add.sprite((i * tileWidth) + 10, (j * tileHeight), 'ant');
 	}
@@ -126,20 +125,37 @@ function setSpriteDir(sprite, facingDirection) {
 }
 
 function startGame(data) {
-	$("#editor1").hide();
-	$("#editor2").hide();
+	$("#editor").hide();
 	$('#start').hide();
+	$("#back").show();
+	$("#enemy-selection").hide();
+	$("#vsText").show();
+	$("#p1Text").text(myUserName);
+	$("#p2Text").text(selectedAIName);
 	gameJSON = data;
-	GAME_WIDTH = (gameJSON["boardDimension"]) ["x"] * tileWidth;
-	GAME_HEIGHT = (gameJSON["boardDimension"]) ["y"] * tileHeight;
+	GAME_WIDTH = (gameJSON["boardDimension"]) ["x"];
+	GAME_HEIGHT = (gameJSON["boardDimension"]) ["y"];
 	if (game !== null) {
 		game.destroy();
-		currentMoveIndex = -1;
+		game = null;
 	}
-	game = new Phaser.Game(GAME_WIDTH, GAME_HEIGHT, Phaser.AUTO, 'match', { preload: preload, create: create, update: update });
+	currentMoveIndex = -1;
+	game = new Phaser.Game(GAME_WIDTH * tileWidth, GAME_HEIGHT * tileHeight, Phaser.AUTO, 'match', { preload: preload, create: create, update: update });
+}
+
+function endGame() {
+	$("#editor").show();
+	$('#start').show();
+	$("#back").hide();
+	$("#enemy-selection").show();
+	if (game !== null) {
+		game.destroy();
+		game = null;
+	}
 }
 
 function runMatch( playerAIs ) {
+	$("#background").hide();
 	var url = baseUrl + "/match/ai";
 	var playerID = [1, 2];
 	var data = {};
@@ -149,7 +165,11 @@ function runMatch( playerAIs ) {
 	}
 
 	var request = $.get(url, data,function(data) {
-		startGame(data);
+		if (data["luaError"] === null || data["luaError"] === undefined)
+			startGame(data);
+		else {
+			displayError(data);
+		}
 	}, "json");
 
 	request.error(function(jqXHR, textStatus, errorThrown) {
@@ -158,23 +178,71 @@ function runMatch( playerAIs ) {
 	});
 }
 
-var editor1 = ace.edit("editor1");
-editor1.setTheme("ace/theme/monokai");
-editor1.getSession().setMode("ace/mode/lua");
-var editor2 = ace.edit("editor2");
-editor2.setTheme("ace/theme/monokai");
-editor2.getSession().setMode("ace/mode/lua");
-$("#start").click(function(event) {
-	var ai1Text = editor1.getValue();
-	var ai2Text = editor2.getValue();
-	saveAI(ai2Text);
-	runMatch([ai1Text, ai2Text]);
-});
+function displayError(errorData) {
+	var text;
+	if (errorData["playerID"] !== 0) {
+		text = "Error in " + selectedAIName + "'s AI";
+	} else {
+		text = errorData["luaError"].replace(/\"/g, '');
+		text = text.replace(/^\[[^\]]*\]:/, 'Line ');
+	}
+	$("#errorText").text(text);
+	$("#background").show();
 
+}
+
+// USER STUFF
+
+var editor = ace.edit("editor");
+editor.setTheme("ace/theme/monokai");
+editor.getSession().setMode("ace/mode/lua");
+editor.setPrintMarginColumn(-1);
+editor.setOption("scrollPastEnd", true);
+$("#start").click(function(event) {
+	var aiText = editor.getValue();
+	saveAI(aiText);
+	getSelectedAI(function(AIs) {
+		AIs.push(aiText);
+		runMatch(AIs);
+	});
+});
+loggedOut();
+
+// TODO: add save btn
 function saveAI(aiText) {
 	var aisRef = fb.child("AIs").child(userAuthData.uid);
 	aisRef.set({
 		ai: aiText
+	});
+}
+
+function getSelectedAI(callback) {
+	if (selectedAIKey === "self") {
+		callback([editor.getValue()]);
+	} else {
+		var aisRef = fb.child("AIs").child(selectedAIKey);
+
+		aisRef.orderByValue().on("child_added", function(snapshot) {
+			callback([snapshot.val()]);
+		});
+	}
+}
+
+function loadMyAI() {
+	var aisRef = fb.child("AIs").child(userAuthData.uid);
+	editor.setValue("--[[Write your AI here--]]");
+	aisRef.orderByValue().on("child_added", function(snapshot) {
+		editor.setValue(snapshot.val(), 1);
+	});
+}
+
+
+var selectedAIName = null;
+var selectedAIKey = null;
+function loadAIChoices () {
+	fb.child("users").orderByKey().on("child_added", function(snapshot) {
+		console.log(snapshot.key());
+		addUserToList(snapshot.val().name, snapshot.key());
 	});
 }
 
@@ -194,45 +262,49 @@ function authDataCallback(authData) {
 			});
 			isNewUser = false;
 		}
-		loggedIn();
 		userAuthData = authData;
+		loggedIn();
 	} else {
 		console.log("User is logged out");
 		loggedOut();
 	}
 }
 
-function getName(authData) {
-	switch(authData.provider) {
-		case 'password':
-		return authData.password.email.replace(/@.*/, '');
-		case 'twitter':
-		return authData.twitter.displayName;
-		case 'facebook':
-		return authData.facebook.displayName;
-	}
-}
-
-loggedOut();
-
 function loggedOut() {
-	$("#editor1").hide();
-	$("#editor2").hide();
+	$("#editor").hide();
 	$("#start").hide();
 	$("#btn-register").show();
 	$("#btn-login").show();
-	$("#btn-logout").hide();
+	$("#back").hide();
+	$("#panel").hide();
+	$("#enemy-selection").hide();
+	$("#background").hide();
+	$("#vsText").hide();
 	userAuthData = null;
+	selectedAIName = null;
+	selectedAIKey = null;
+	isNewUser = false;
+	newUserName = null;
+	if (game != null) {
+		game.destroy();
+		game = null;
+	}
 }
 
 function loggedIn() {
-	$("#editor1").show();
-	$("#editor2").show();
+	$("#editor").show();
 	$("#start").show();
 	$("#btn-register").hide();
 	$("#btn-login").hide();
-	$("#btn-logout").show();
+	$("#back").hide();
+	$("#panel").show();
+	$("#enemy-selection").show();
+	$("#background").hide();
+	$("#vsText").hide();
+	loadAIChoices();
+	loadMyAI();
 }
+
 // Register the callback to be fired every time auth state changes
 fb.onAuth(authDataCallback);
 
@@ -260,6 +332,8 @@ function doLogin(email, password) {
 function logout () {
 	fb.unauth();
 	loggedOut();
+	$('#enemy-selection .list').empty();
+	enemyOptionKeys = [];
 }
 
 function registerEmail(name, email, password) {
@@ -278,6 +352,27 @@ function registerEmail(name, email, password) {
 	});
 }
 
+var enemyOptionKeys = [];
+var myUserName = "";
+function addUserToList(userName, key) {
+	if (enemyOptionKeys == null || typeof enemyOptionKeys == 'undefined') {
+				enemyOptionKeys = [];
+	} else {
+		for (var i = 0; i < enemyOptionKeys.length; i++) {
+			if (enemyOptionKeys[i] === key){
+					console.log ("" + enemyOptionKeys[i] + "contains" + key)
+					return;
+				}
+		}
+	}
+	if (key === userAuthData.uid) {
+		myUserName = userName
+		userName += " (myself)";
+	}
+	enemyOptionKeys.push(key);
+    $('#enemy-selection .list').append('<li class="ui-widget-content" data-key="' + key + '">'+userName+'</li>');
+}
+
 $(function () {
 	$( "#dialog" ).dialog();
 	$("#dialog-register").dialog(
@@ -294,7 +389,7 @@ $(function () {
 			Cancel: function () {
 				$(this).dialog("close");
 			}
-		}
+		},
 	});
 
 	$("#dialog-login").dialog({
@@ -320,9 +415,38 @@ $(function () {
 		$("#dialog-login").dialog("open");
 	});
 
+	$("#btn-save").click(function () {
+		var aiText = editor.getValue();
+		if (aiText !== null)
+			saveAI(aiText);
+	});
+
 	$("#btn-logout").click(function () {
 		logout();
 	});
+
+	$("#back").click(function () {
+		endGame();
+	});
+
+	$("#selectable").selectable({
+		autoRefresh: true,
+   		selected: function(event, ui) {
+        	$(ui.selected).addClass("ui-selected").siblings().removeClass("ui-selected");
+   			console.log(ui.selected.getAttribute("data-key"));
+   			selectedAIName = ui.selected.textContent;
+   			selectedAIKey = ui.selected.getAttribute("data-key");
+    	}                   
+	});
+
+	// TODO: this doesn't work right.
+	function SelectSelectableElement (selectableContainer, elementsToSelect) {
+	    $(".ui-selected", selectableContainer).not(elementsToSelect).removeClass("ui-selected").addClass("ui-unselecting");
+	    $(elementsToSelect).not(".ui-selected").addClass("ui-selecting");
+    	selectableContainer.data("ui-selectable")._mouseStop(null);
+	}
+	//SelectSelectableElement($("#selectable"), $("li:first", "#selectable"));
+
 });
 
 

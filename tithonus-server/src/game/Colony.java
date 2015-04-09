@@ -1,5 +1,7 @@
 package game;
 
+import java.util.Random;
+
 import ai.LuaJManager;
 
 public class Colony {
@@ -7,7 +9,7 @@ public class Colony {
 	private GameState gState;
 	public int playerID;
 	public Ant[] ants;
-	public static final int PLAYER_ANTS_COUNT = 5;
+	public static final int PLAYER_ANTS_COUNT = 15;
 	
 
 	public Colony(String aiScript, int playerID, GameState gameState) {
@@ -18,7 +20,12 @@ public class Colony {
 		// populate ants with playerIDs
 		for (int i = 0; i < PLAYER_ANTS_COUNT; i++, antID++) {
 			// TODO: have proper initial ant positions
-			ants[i] = new Ant(playerID, gameState, gState.getTile(playerID * 7 + 1, i + 2), Direction.E);
+			Tile tile;
+			do {
+				tile = gState.getTile(gState.random.nextInt(gState.WORLD_X_LENGTH), gState.random.nextInt(gState.WORLD_Y_LENGTH));
+			} while (tile.obstacle());
+			Direction direction =  Direction.values()[gState.random.nextInt(Direction.values().length)];
+			ants[i] = new Ant(playerID, gameState, tile, direction);
 			LuaJManager.setupScripts(aiScript, ants[i]);
 		}
 	}

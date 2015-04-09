@@ -3,6 +3,8 @@ package game;
 import java.sql.Date;
 import java.util.LinkedList;
 
+import ai.LuaAIError;
+
 public class GameEngine {
 
 	@SuppressWarnings("unused")
@@ -12,7 +14,7 @@ public class GameEngine {
 	private LinkedList<GameObserver> observers = new LinkedList<>();
 	private int winnerPlayerID = -1;
 	
-	public GameEngine(String[] aiScripts) {
+	public GameEngine(String[] aiScripts) throws LuaAIError {
 		this.aiScripts = aiScripts;
 		gameState = new GameState(aiScripts);
 	}
@@ -25,9 +27,11 @@ public class GameEngine {
 			// foreach colony, play turn -> check victory
 			for (Colony colony : gameState.colonies) {
 				for (Ant ant : colony.ants) {
-					AntMove antMove = ant.playTurn();
-					notifyObservers(antMove, ant);
-					display();
+					if (ant.alive) {
+						AntMove antMove = ant.playTurn();
+						notifyObservers(antMove, ant);
+	//					display();
+					}
 				}
 			}
 			turns--;

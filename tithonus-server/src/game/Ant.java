@@ -11,6 +11,7 @@ public class Ant {
 	public Direction facingDirection;
 	public boolean alive = true;
 	public float health = 100.0f;
+	public float attackDamage = 150.0f;
 
 	public Ant(int playerID, GameState gameState, Tile position, Direction facingDirection) {
 		this.playerID = playerID;
@@ -76,7 +77,7 @@ public class Ant {
 	}
 	
 	public void takeDamage(Ant attacker) {
-		health -= 0.1 * attacker.health;
+		health -= attacker.attackDamage;
 		if (health <= 0.0f)
 			alive = false;
 	}

@@ -14,4 +14,8 @@ public class Tile {
 	public boolean obstacle() {
 		return ant != null;
 	}
+	
+	public String toString() {
+		return "Tile:  " + "X: " + x + "  Y: " + y + ((ant == null)? "" : ("  ANT: " + ant.antID));
+	}
 }

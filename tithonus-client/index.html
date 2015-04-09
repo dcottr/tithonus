@@ -8,71 +8,98 @@
 <script src="http://code.jquery.com/jquery-migrate-1.2.1.js"></script>
 <script src="https://cdn.firebase.com/js/client/2.2.3/firebase.js"></script>
 <style type="text/css" media="screen">
-    #editor1 { 
+    #editor { 
         position: absolute;
         top: 0;
         right: 0;
         bottom: 0;
         left: 0;
         width: 50%;
-
-    }
-    #editor2 { 
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 50%;
-        width: 50%;
     }
     #start {
     	position: absolute;
-    	top: 80%;
-        right: 0;
-        bottom: 0;
-        left: 48%;
-        z-index: 20;
+    	top: auto;
+      right: auto;
+      bottom: 15%;
+      left: 50%;
+      z-index: 20;
     }
-    #btn-logout {
+    #panel {
     	position: absolute;
     	top: 1%;
-        right: 1%;
-        bottom: auto;
-        left: auto;
-        z-index: 21;
+      right: 1%;
+      bottom: auto;
+      left: auto;
+      z-index: 21;
     }
+    #back {
+      position: absolute;
+      top: 1%;
+      left: 1%;
+      bottom: auto;
+      right: auto;
+    }
+
+    #btn-register {
+      position: absolute;
+      top: 35%;
+      right: 40%;
+      bottom: auto;
+      left: auto;
+      width: 20%
+    }
+    #btn-login {
+      position: absolute;
+      top: 50%;
+      right: 40%;
+      bottom: auto;
+      left: auto;
+      width: 20%
+    }
+
+  #feedback { font-size: 1.4em; }
+  #selectable .ui-selecting { background: #800000; }
+  #selectable .ui-selected { background: #8B0000; color: white; }
+  #selectable {
+  	position: absolute;
+  	right: 20%;
+  	left: auto;
+  	top: 10%;
+  	bottom: auto;
+  	list-style-type: none;
+  	margin: 0;
+  	padding: 0;
+  	width: 25%;
+  }
+  #selectable li { margin: 3px; padding: 0.4em; font-size: 1.4em; height: 18px; }
+
+  #background {
+    position: absolute;
+    right: auto;
+    left: 5%;
+    top: auto;
+    bottom: 10%;
+    width: 40%;
+    height: 10%;
+    z-index: 50;
+    padding: 0.4em;
+    border: 2px solid black;
+    text-align:center
+    vertical-align:middle
+  }
+  #vsText {
+
+  }
+
 
 </style>
 </head>
 <body bgcolor="#272822">
-	<div id="editor1">if enemyAntAhead() then
-	attackAntAhead();
-end
-
-if shouldTurnLeft then
-  turnLeft();
-  shouldTurnLeft = false;
-else
-  if not moveForward() then
-    shouldTurnLeft = true;
-  else
-    shouldTurnLeft = false;
-  end
-end</div>
-	<div id="editor2">if enemyAntAhead() then
-	attackAntAhead();
-end
-
-if shouldTurnLeft then
-  turnLeft();
-  shouldTurnLeft = false;
-else
-  if not moveForward() then
-    shouldTurnLeft = true;
-  else
-    shouldTurnLeft = false;
-  end
-end</div>
+	<div id="editor"> --[[Write your AI here--]]</div>
+	<div id="enemy-selection">
+		<ol id="selectable" class="list">
+		</ol>
+	</div>
 
 	<input id="start" type="image" src="assets/start-btn.png" alt="Submit">
 
@@ -99,13 +126,27 @@ end</div>
 	    </form>
 	</div>
 	<br />
-	<button id="btn-register">Register</button>
-	<br /><br />
-	<button id="btn-login">Login</button>
-	<button id="btn-logout">Logout</button>
+	<button id="btn-register"><h1>Register</h1></button>
+	<button id="btn-login"><h1>Login</h1></button>
+  <div id="panel">
+    <button id="btn-save">Save</button>
+	 <button id="btn-logout">Logout</button>
+  </div>
+  <button id="back">Back</button>
 
+  <div id="vsText">
+    <h1><font color="#8A0808" id="p1Text">p1</font>
+    vs.
+    <font color="#DF7401" id="p2Text">p2</font>
+    </h1>
+  </div>
 
 	<script src="libs/ace-src-min/ace.js" type="text/javascript" charset="utf-8"></script>
+
+  <div id="background">
+      <font id="errorText" color="red">Error Text Box</font>
+  </div>
+
 
 
 
