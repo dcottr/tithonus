@@ -19,10 +19,14 @@ import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.server.handler.ContextHandler;
+import org.eclipse.jetty.server.handler.DefaultHandler;
+import org.eclipse.jetty.server.handler.HandlerList;
+import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.luaj.vm2.LuaError;
 
 import ai.LuaAIError;
@@ -38,8 +42,19 @@ public class ServerManager extends AbstractHandler {
         
         ContextHandler contextAI = new ContextHandler("/match/ai");
         contextAI.setHandler(new ServerManager());
+        
+       // server.setHandler(contextAI);
+        
+        ResourceHandler resource_handler = new ResourceHandler();
+        resource_handler.setDirectoriesListed(true);
+        resource_handler.setWelcomeFiles(new String[]{ "index.html" });
 
-        server.setHandler(contextAI);
+        resource_handler.setResourceBase("./tithonus-client/");
+
+        HandlerList handlers = new HandlerList();
+        handlers.setHandlers(new Handler[] { resource_handler, contextAI });
+        server.setHandler(handlers);
+
  
         server.start();
         server.join();

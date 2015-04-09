@@ -370,7 +370,7 @@ function addUserToList(userName, key) {
 		userName += " (myself)";
 	}
 	enemyOptionKeys.push(key);
-    $('#enemy-selection .list').append('<li class="ui-widget-content" data-key="' + key + '">'+userName+'</li>');
+  	$('#enemy-selection .list').append('<li class="ui-widget-content" data-key="' + key + '">'+userName+'</li>');
 }
 
 $(function () {
