@@ -7,6 +7,7 @@ public class AntMove {
 	// TODO: only allow one operation at a time.
 	public Direction moveDirection = null;
 	public Direction turnDirection = null;
+	public boolean callForHelp = false;
 	
 	public boolean valid = true;
 	private boolean moveAssigned = false;
@@ -27,6 +28,11 @@ public class AntMove {
 	public void setTurnDirection(Direction dir) {
 		certifyMove();
 		turnDirection = dir;
+	}
+	
+	public void setCallForHelp() {
+		callForHelp = true;
+		ant.callingForHelp = true;
 	}
 	
 	public float attackAntInFront() {

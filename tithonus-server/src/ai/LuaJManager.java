@@ -7,6 +7,7 @@ import java.security.InvalidParameterException;
 import java.util.*;
 
 import org.luaj.vm2.Globals;
+import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.jse.JsePlatform;
 
@@ -55,13 +56,16 @@ public class LuaJManager {
 	}*/
 	
 	public static void setupScripts(String luaScript, Ant ant) {
-		Globals globals = JsePlatform.standardGlobals();
-		LuaValue script = globals.load(luaScript);
-		LuaAnt luaAnt = new LuaAnt(globals, script, ant);
-		ant.setAI(luaAnt);
+		try {
+			Globals globals = JsePlatform.standardGlobals();
+			LuaValue script = globals.load(luaScript);
+			script.call();
+			LuaAnt luaAnt = new LuaAnt(globals, script, ant);
+			ant.setAI(luaAnt);
+		} catch (LuaError e) {
+			throw new LuaAIError(e, ant.playerID);
+		}
 	}
-	
-
 }
 
 

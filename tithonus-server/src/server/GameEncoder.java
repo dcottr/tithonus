@@ -19,6 +19,7 @@ public class GameEncoder extends GameObserver {
 				.add("x", gameState.WORLD_X_LENGTH)
 				.add("y", gameState.WORLD_X_LENGTH));
 		game.add("players", encodePlayers());
+		game.add("obstacles", encodeObstacles());
 	}
 	
 	@Override
@@ -35,6 +36,22 @@ public class GameEncoder extends GameObserver {
 	public JsonObject getGameJson() {
 		game.add("moves", moves);
 		return game.build();
+	}
+	
+	private JsonArrayBuilder encodeObstacles() {
+		JsonArrayBuilder obstacles = Json.createArrayBuilder();
+		for (int x = 0; x < gameState.WORLD_X_LENGTH; x++) {
+			for (int y = 0; y < gameState.WORLD_Y_LENGTH; y++) {
+				if (gameState.getTile(x, y).obstacle()) {
+					JsonObjectBuilder obstacleBuilder = Json.createObjectBuilder();
+					obstacleBuilder.add("position", Json.createObjectBuilder()
+							.add("x", x)
+							.add("y", y));
+					obstacles.add(obstacleBuilder);
+				}
+			}
+		}
+		return obstacles;
 	}
 	
 	private JsonArrayBuilder encodePlayers() {
@@ -74,6 +91,8 @@ public class GameEncoder extends GameObserver {
 			changesBuilder.add(encodeAnt(changedAnt));
 		}
 		moveBuilder.add("modifiedAnts", changesBuilder);
+		moveBuilder.add("antID", ant.antID);
+		moveBuilder.add("callForHelp", move.callForHelp);
 		return moveBuilder;
 	}
 

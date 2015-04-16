@@ -2,12 +2,13 @@ var baseUrl = "http://localhost:4000";
 var fb = new Firebase("https://tithonus.firebaseio.com");
 var ants = [];
 var players = []; // defines initial state
+var obstacles = [];
 var playerIDs = [];
 var moves = [];
 
 var tileWidth = 32;
 var tileHeight = 32;
-var timeSpeed = 0.01;//1.0; // seconds per turn
+var timeSpeed = 0.001;//1.0; // seconds per turn
 var timeElapsed = 0;
 var GAME_WIDTH; //= tileWidth * 10;
 var GAME_HEIGHT; //= tileHeight * 10;
@@ -16,12 +17,14 @@ var gameJSON;
 
 
 function preload() {
-	game.load.image('tile', 'assets/boundTile.png');
+	game.load.image('tile', 'assets/plainTile.png');
 
-	var antImages = ["ant-red.png", "ant-orange.png"];
+	var antImages = ["ant-brown.png", "ant-orange.png"];
 	for (var i = 0; i < antImages.length; i++) {
 		game.load.image('ant' + i, 'assets/' + antImages[i]);
 	}
+	game.load.image('boulder', 'assets/boulder.png');
+	game.load.image('help', 'assets/help.png');
 }
 
 function create() {
@@ -29,52 +32,78 @@ function create() {
 	for (var i = 0; i < GAME_WIDTH; i++) {
 		for (var j = 0; j < GAME_HEIGHT; j++) {
 			var tile = game.add.sprite(i * tileWidth, j * tileHeight, 'tile');
-		//	var tile = game.add.sprite((i * tileWidth) + 10, (j * tileHeight), 'ant');
+		}
 	}
-}
 
-players = gameJSON["players"];
-moves = gameJSON["moves"];
-console.log("Moves count: " + moves.length);
-playerCount = players.length;
-for (var i = 0; i < players.length; i++) {
-	var player = players[i];
-	playerIDs.push(player["playerID"]);
-	var playerAnts = player["ants"];
-	for (var j = 0; j < playerAnts.length; j++) {
-		var ant = {};
-		ant.data = playerAnts[j];
-		ant.sprite = game.add.sprite(-1, -1, 'ant' + player["playerID"]);
-		ant.sprite.anchor.setTo(0.5, 0.5);
-		ants.push(ant);
+	players = gameJSON["players"];
+	moves = gameJSON["moves"];
+	obstacles = gameJSON["obstacles"];
+
+	for (var i = 0; i < obstacles.length; i++) {
+		var obstacle = obstacles[i];
+		var x = (obstacle["position"])["x"];
+		var y = (obstacle["position"])["y"];
+		game.add.sprite(x * tileWidth, y * tileHeight, 'boulder');
+		console.log("x: " + x + " y: " + y);
 	}
-}
-displayCurState();
 
+
+	console.log("Moves count: " + moves.length);
+	playerCount = players.length;
+	for (var i = 0; i < players.length; i++) {
+		var player = players[i];
+		playerIDs.push(player["playerID"]);
+		var playerAnts = player["ants"];
+		for (var j = 0; j < playerAnts.length; j++) {
+			var ant = {};
+			ant.data = playerAnts[j];
+			ant.sprite = game.add.sprite(-1, -1, 'ant' + player["playerID"]);
+			ant.sprite.anchor.setTo(0.5, 0.5);
+			ant.callForHelpSprite = game.add.sprite(-1, -1, 'help');
+			ant.callForHelpSprite.visible = false;
+			ant.callForHelpSprite.anchor.setTo(0.5, 0.5);
+
+			ants.push(ant);
+		}
+	}
+	flag = true;
+	displayCurState();
 }
 
 var lastGameUpdate;
 var currentMoveIndex = -1;
+var flag = true;
 function update() {
-	if (game.time.elapsedSince(lastGameUpdate) > timeSpeed * 1000) {
+	if (game.time.elapsedSince(lastGameUpdate) > timeSpeed * 1000 && flag) {
 		currentMoveIndex++;
-		console.log("index: " + currentMoveIndex);
+		// console.log("index: " + currentMoveIndex);
 		if (currentMoveIndex < moves.length) {
 			applyMoveToState(moves[currentMoveIndex]);
 			displayCurState();
 		} else {
+			var text;
+			if (gameJSON["winnerPlayerID"] === -1)
+				text = "Draw!";
+			else
+				if (gameJSON["winnerPlayerID"] === 0)
+					text = myUserName + " Wins!";
+				else
+					text = selectedAIName + " Wins!";
+			console.log(gameJSON["winnerPlayerID"] + ": " +text);
+			var style = { font: "60px Arial", fill: "#000000", align: "center" };
+			var textSprite = game.add.text(game.world.centerX, game.world.centerY, text, style);
+			textSprite.anchor.set(0.5);
+			flag = false;
 			// TODO: display winner is playerID: gameJSON["winnerPlayerID"]
 		}
-//		game.debug.text('Here: ' + (k++), 32, 32);
-lastGameUpdate = game.time.now;
-}
+		lastGameUpdate = game.time.now;
+	}
 
 }
 
 // change ants[i]
 function applyMoveToState(move) {
 	var movedAnts = move["modifiedAnts"];
-	console.log("modifiedAnts: " + movedAnts);
 	if (movedAnts !== null) {
 		for (var i = 0; i < movedAnts.length; i++) {
 			var movedAnt = movedAnts[i];
@@ -90,6 +119,18 @@ function applyMoveToState(move) {
 			}
 		}
 	}
+	var antID = move["antID"];
+	var callForHelp = move["callForHelp"];
+	for (var i = 0; i < ants.length; i++) {
+		var ant = ants[i];
+		if (ant.data["antID"] === antID) {
+			if (callForHelp) {
+				ant.callForHelpSprite.visible = true;
+			} else {
+				ant.callForHelpSprite.visible = false;
+			}
+		}
+	};
 }
 
 function displayCurState() {
@@ -104,9 +145,13 @@ function displayCurState() {
 		var antSprite = ants[i].sprite;
 		antSprite.x = x * tileWidth + tileWidth/2.0;
 		antSprite.y = y * tileHeight + tileHeight/2.0;
+		var callHelpSprite = ants[i].callForHelpSprite;
+		callHelpSprite.x = antSprite.x;
+		callHelpSprite.y = antSprite.y;
 		setSpriteDir(ants[i].sprite, data["facingDirection"]);
 		if (!data["alive"]) {
 			antSprite.visible = false;
+			ants[i].callForHelpSprite.visible = false;
 		}
 	}
 }
@@ -157,10 +202,8 @@ function endGame() {
 function runMatch( playerAIs ) {
 	$("#background").hide();
 	var url = baseUrl + "/match/ai";
-	var playerID = [1, 2];
 	var data = {};
 	for (var i = 0; i < playerAIs.length; i++) {
-		// data[i] = {"player" : playerAIs[i] };
 		data["p" + i] = playerAIs[i];
 	}
 
@@ -171,6 +214,7 @@ function runMatch( playerAIs ) {
 			displayError(data);
 		}
 	}, "json");
+	console.log(request);
 
 	request.error(function(jqXHR, textStatus, errorThrown) {
 		console.log(errorThrown);
@@ -202,7 +246,7 @@ $("#start").click(function(event) {
 	var aiText = editor.getValue();
 	saveAI(aiText);
 	getSelectedAI(function(AIs) {
-		AIs.push(aiText);
+		AIs.unshift(aiText);
 		runMatch(AIs);
 	});
 });
@@ -230,7 +274,7 @@ function getSelectedAI(callback) {
 
 function loadMyAI() {
 	var aisRef = fb.child("AIs").child(userAuthData.uid);
-	editor.setValue("--[[Write your AI here--]]");
+	editor.setValue("function playTurn ()\n\t--[[Write your AI here--]]\nend");
 	aisRef.orderByValue().on("child_added", function(snapshot) {
 		editor.setValue(snapshot.val(), 1);
 	});

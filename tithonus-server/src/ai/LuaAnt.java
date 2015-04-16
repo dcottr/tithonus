@@ -1,9 +1,12 @@
 package ai;
 import game.Ant;
 import game.AntMove;
-import game.GameState;
+import game.Colony;
+import game.Tile;
+import game.Direction;
 
 import org.luaj.vm2.Globals;
+import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaString;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.OneArgFunction;
@@ -32,30 +35,39 @@ public class LuaAnt extends AntAI {
 	
 	private void setup() {
 		setEnv("player", playerID);
-		setEnv("yodle", new Yodle());
 		setEnv("moveForward", new MoveForward());
 		setEnv("turnLeft", new TurnLeft());
 		setEnv("turnRight", new TurnRight());
-		setEnv("myHitpoints", new MyHitpoints());
+		setEnv("turn", new Turn());
 		setEnv("enemyAntAhead", new EnemyAntInFront());
 		setEnv("attackAntAhead", new AttackAntInFront());
+		setEnv("callForHelp", new CallForHelp());
+		setEnv("hearCallForHelp", new HearCallForHelp());
 		updateLuaEnv();
 	}
 	
 	// return an AntMove object
 	public AntMove playTurn() {
 		move = new AntMove(ant);
-		script.call();
+		try {
+			env.get("playTurn").call();
+		} catch (LuaError e) {
+			throw new LuaAIError(e, ant.playerID);
+		}
 		ant.acceptMove(move);
 		updateLuaEnv();
 		return move;
 	}
 	
-	private class Yodle extends OneArgFunction {
-		public LuaValue call(LuaValue x) {
-			return LuaValue.valueOf("yodlee" + x);
-		}
-	}
+	 private class Turn extends OneArgFunction {
+		 public LuaValue call(LuaValue arg) {
+			 String shortDir = arg.strvalue().tojstring();
+			 Direction dir = Direction.valueOf(shortDir);
+			 System.out.println("String: " + shortDir + " gives: " + dir.name());
+			 move.setTurnDirection(dir);
+			 return LuaValue.TRUE;
+		 }
+	 }
 	 
 	 private class MoveForward extends ZeroArgFunction {
 		 public LuaValue call() {
@@ -80,12 +92,6 @@ public class LuaAnt extends AntAI {
 		 }
 	 }
 	 
-	 private class MyHitpoints extends ZeroArgFunction {
-		 public LuaValue call() {
-			 return LuaValue.valueOf(ant.health);
-		 }
-	 }
-	 
 	 private class EnemyAntInFront extends ZeroArgFunction {
 		 public LuaValue call() {
 			 return LuaValue.valueOf(ant.hasEnemyAntInFront());
@@ -99,10 +105,35 @@ public class LuaAnt extends AntAI {
 		 }
 	 }
 	 
+	 private class CallForHelp extends ZeroArgFunction {
+		 public LuaValue call() {
+			 move.setCallForHelp();
+			 return LuaValue.valueOf(true);
+		 }
+	 }
+
+	 private class HearCallForHelp extends ZeroArgFunction {
+		 public LuaValue call() {
+			 return LuaValue.valueOf(ant.hearCallForHelp());
+		 }
+	 }
+	 
 	private void updateLuaEnv() {
 		setEnv("xPosition", ant.position.x);
 		setEnv("yPosition", ant.position.y);
-		setEnv("facingDirection", LuaValue.valueOf(ant.facingDirection.name()));
+		
+		Ant nearestCall = ant.nearestAllyCallForHelp();
+		if (nearestCall == null || nearestCall.getTileInFront() == null) {
+			setEnv("nearestCall_xPosition", -1);
+			setEnv("nearestCall_yPosition", -1);
+		} else {
+			Tile frontTile = nearestCall.getTileInFront();
+			setEnv("nearestCall_xPosition", frontTile.x);
+			setEnv("nearestCall_yPosition", frontTile.y);
+		}
+
+		setEnv("myHitpoints", LuaValue.valueOf(ant.health));
+		setEnv("facingDirection", LuaValue.valueOf("" + ant.facingDirection.name().charAt(0)));
 	}
 	
 	private void setEnv(String varNameString, LuaValue variable) {

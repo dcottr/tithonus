@@ -11,8 +11,9 @@ public class Ant {
 	public Direction facingDirection;
 	public boolean alive = true;
 	public float health = 100.0f;
-	public float attackDamage = 150.0f;
-
+	public float attackDamage = 5.0f;
+	public boolean callingForHelp = false;
+	
 	public Ant(int playerID, GameState gameState, Tile position, Direction facingDirection) {
 		this.playerID = playerID;
 		this.gState = gameState;
@@ -33,6 +34,7 @@ public class Ant {
 	public AntMove playTurn() {
 		if (ai == null)
 			throw new IllegalStateException("Cannot play turn until ant's AI has been set.");
+		callingForHelp = false;
 		return ai.playTurn();
 	}
 
@@ -48,7 +50,7 @@ public class Ant {
 			int newY = position.y + move.moveDirection.yDelta;
 			Tile newPositionTile = gState.getTile(newX, newY);
 			position.ant = null;
-			newPositionTile = (newPositionTile == null || newPositionTile.obstacle()) ? position : newPositionTile;
+			newPositionTile = (newPositionTile == null || newPositionTile.filled()) ? position : newPositionTile;
 			setPosition(newPositionTile);
 		}
 		if (move.turnDirection != null) {
@@ -78,22 +80,50 @@ public class Ant {
 	
 	public void takeDamage(Ant attacker) {
 		health -= attacker.attackDamage;
-		if (health <= 0.0f)
+		if (health <= 0.0f) {
 			alive = false;
+			position.ant = null;
+		}
+	}
+	
+	public boolean hearCallForHelp() {
+		return nearestAllyCallForHelp() != null;
+	}
+	
+	public Ant nearestAllyCallForHelp() {
+		if (gState.colonies[playerID] == null) {
+			return null;
+		}
+		Ant nearest = null;
+		int nearestDist = Integer.MAX_VALUE;
+		for (Ant ally : gState.colonies[playerID].ants) {
+			if (ally.alive && ally.callingForHelp && ally != this) {
+				int dist = GameState.dist(ally.position, position);
+				if (dist < nearestDist) {
+					nearest = ally;
+					nearestDist = dist;
+				}
+			}
+		}
+		return nearest;
 	}
 	
 	private Ant getAntInFront () {
-		Tile frontTile = getTileAtDelta(facingDirection.xDelta, facingDirection.yDelta);
+		Tile frontTile = getTileInFront();
 		if (frontTile == null)
 			return null;
 		return frontTile.ant;
+	}
+	
+	public Tile getTileInFront() {
+		return getTileAtDelta(facingDirection.xDelta, facingDirection.yDelta);
 	}
 	
 	private boolean canMoveToTile(int deltaX, int deltaY) {
 		if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) return false;
 		Tile dest = getTileAtDelta(deltaX, deltaY);
 		if (dest != null) {
-			return !dest.obstacle();
+			return !dest.filled();
 		}
 		return false;
 

@@ -1,6 +1,5 @@
 package game;
 
-import java.sql.Date;
 import java.util.LinkedList;
 
 import ai.LuaAIError;
@@ -26,18 +25,52 @@ public class GameEngine {
 			// play a game's turn
 			// foreach colony, play turn -> check victory
 			for (Colony colony : gameState.colonies) {
+				boolean colonyAlive = false;
 				for (Ant ant : colony.ants) {
 					if (ant.alive) {
 						AntMove antMove = ant.playTurn();
 						notifyObservers(antMove, ant);
-	//					display();
+						colonyAlive = true;
 					}
+				}
+				if (!colonyAlive) {
+					winnerPlayerID = getWinnerID();
+					break;
 				}
 			}
 			turns--;
 		}
 		System.out.println("completed");
-		notifyObservers(-1);
+		
+		notifyObservers(getWinnerID());
+	}
+	
+	private int getWinnerID() {
+		int[] livingAnts = new int[gameState.colonies.length];
+		for (int i = 0; i < gameState.colonies.length; i++) {
+			Colony colony = gameState.colonies[i];
+			for (Ant ant : colony.ants) {
+				if (ant.alive) {
+					livingAnts[i]++;
+				}
+			}
+		}
+		// To be modified for matches with more than two players.
+		int winner = 0;
+		boolean tie = false;
+		for (int i = 1; i < livingAnts.length; i++){
+			int newnumber = livingAnts[i];
+			if (newnumber > livingAnts[winner]){
+				winner = i;
+				tie = false;
+			} else if (newnumber == livingAnts[winner]) {
+				tie = true;
+			}
+		}
+		if (tie) {
+			return -1;
+		} else
+			return winner;
 	}
 	
 	public void addObserver(GameObserver observer) {

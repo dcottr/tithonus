@@ -2,7 +2,7 @@ package ai;
 
 import org.luaj.vm2.LuaError;
 
-public class LuaAIError extends Throwable {
+public class LuaAIError extends RuntimeException {
 	private int playerID;
 	private LuaError luaError;
     public LuaAIError( LuaError luaError, int playerID) {

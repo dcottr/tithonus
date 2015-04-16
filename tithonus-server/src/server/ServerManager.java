@@ -4,12 +4,13 @@ package server;
 import game.GameEngine;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.LinkedList;
-import java.util.Scanner;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -24,7 +25,6 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.luaj.vm2.LuaError;
@@ -65,13 +65,16 @@ public class ServerManager extends AbstractHandler {
             Request baseRequest,
             HttpServletRequest request,
             HttpServletResponse response) throws IOException {
-		Enumeration<String> pNames = request.getParameterNames();
+	       System.out.println("ai: ");
+		ArrayList<String> pNames = Collections.list(request.getParameterNames());
+	       System.out.println("ai: ");
+		Collections.sort(pNames);
+	       System.out.println("ai: ");
 		LinkedList<String> aiStrings = new LinkedList<>();
-		while (pNames.hasMoreElements()) {
-		       String param = pNames.nextElement();
-		       String ai = request.getParameter(param);
+		for (String param : pNames) {
+			String ai = request.getParameter(param);
 		       aiStrings.add(ai);
-		       System.out.println("ai: " + param + " : " + ai);
+		       System.out.println("ai: " + ai);
 		}
 		
     	if (aiStrings.isEmpty()) return;
@@ -106,45 +109,10 @@ public class ServerManager extends AbstractHandler {
 				     .add("luaError", e.getMessage())
 				     .add("playerID", e.getPlayerID()).build();
 			 jsonWriter.writeObject(error);
-
 		}
         jsonWriter.close();
 		String jsonString = jsonStream.toString();
 		return jsonString;
 	}
-	
-//	private String runGameWithIDs(String[] playerIDs) throws FileNotFoundException {
-//		
-//		String[] filePaths = new String[playerIDs.length]; //new String[]{"AIScripts/ai1", "AIScripts/ai2"};
-//		
-//		for (int i = 0; i < filePaths.length; i++) {
-//			filePaths[i] = "AIScripts/ai" + playerIDs[i];
-//		}
-//		
-//		String[] aiScripts = new String[filePaths.length];
-//		for (int i = 0; i < filePaths.length; i++) {
-//			//read the script from path
-//			aiScripts[i] = "";
-//			Scanner scanner = new Scanner(new File(filePaths[i]));
-//			while (scanner.hasNextLine()) {
-//				aiScripts[i] += scanner.nextLine() + '\n';
-//			}
-//			scanner.close();
-//		}
-//		
-//		GameEngine engine = new GameEngine(aiScripts);
-//		GameEncoder encoder = new GameEncoder(engine.gameState);
-//				
-//		engine.addObserver(encoder);
-//		engine.start();
-//		
-//		//write to file
-////        OutputStream os = new FileOutputStream("game.json");
-//        OutputStream jsonStream = new ByteArrayOutputStream();
-//        JsonWriter jsonWriter = Json.createWriter(jsonStream);
-//        jsonWriter.writeObject(encoder.getGameJson());
-//        jsonWriter.close();
-//		String jsonString = jsonStream.toString();
-//		return jsonString;
-//	}
+
 }
