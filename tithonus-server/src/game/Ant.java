@@ -41,7 +41,6 @@ public class Ant {
 	public void acceptMove(AntMove move) {
 		// modify ant's state from move (and notify observers(?))
 		if (!move.valid) {
-			System.out.println("Invalid move");
 			return;
 		}
 			

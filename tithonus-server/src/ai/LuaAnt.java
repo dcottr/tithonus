@@ -63,7 +63,6 @@ public class LuaAnt extends AntAI {
 		 public LuaValue call(LuaValue arg) {
 			 String shortDir = arg.strvalue().tojstring();
 			 Direction dir = Direction.valueOf(shortDir);
-			 System.out.println("String: " + shortDir + " gives: " + dir.name());
 			 move.setTurnDirection(dir);
 			 return LuaValue.TRUE;
 		 }

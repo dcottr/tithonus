@@ -65,16 +65,12 @@ public class ServerManager extends AbstractHandler {
             Request baseRequest,
             HttpServletRequest request,
             HttpServletResponse response) throws IOException {
-	       System.out.println("ai: ");
 		ArrayList<String> pNames = Collections.list(request.getParameterNames());
-	       System.out.println("ai: ");
 		Collections.sort(pNames);
-	       System.out.println("ai: ");
 		LinkedList<String> aiStrings = new LinkedList<>();
 		for (String param : pNames) {
 			String ai = request.getParameter(param);
 		       aiStrings.add(ai);
-		       System.out.println("ai: " + ai);
 		}
 		
     	if (aiStrings.isEmpty()) return;
